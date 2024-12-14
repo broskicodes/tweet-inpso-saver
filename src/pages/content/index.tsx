@@ -1,20 +1,102 @@
 import { createRoot } from 'react-dom/client';
-import './style.css' 
-const div = document.createElement('div');
-div.id = '__root';
-document.body.appendChild(div);
+import { createPortal } from 'react-dom';
+import './style.css'
+import { Save } from 'lucide-react'
+import React from 'react'
 
-const rootContainer = document.querySelector('#__root');
-if (!rootContainer) throw new Error("Can't find Content root element");
-const root = createRoot(rootContainer);
-root.render(
-  <div className='absolute bottom-0 left-0 text-lg text-black bg-amber-400 z-50'  >
-    content script <span className='your-class'>loaded</span>
-  </div>
-);
+function SaveButton() {
+  const [showAbove, setShowAbove] = React.useState(false);
+  const [showTooltip, setShowTooltip] = React.useState(false);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const [tooltipPosition, setTooltipPosition] = React.useState({ top: 0, left: 0 });
 
-try {
-  console.log('content script loaded');
-} catch (e) {
-  console.error(e);
+  React.useEffect(() => {
+    const button = buttonRef.current;
+    if (!button) return;
+
+    const updatePosition = () => {
+      const rect = button.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const showAbove = spaceBelow < 40;
+      
+      setShowAbove(showAbove);
+      setTooltipPosition({
+        top: showAbove ? rect.top - 24 : rect.bottom + 4,
+        left: rect.left + rect.width / 2
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('scroll', updatePosition);
+    return () => window.removeEventListener('scroll', updatePosition);
+  }, []);
+
+  return (
+    <>
+      <button 
+        ref={buttonRef}
+        className="p-2.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-900 group relative"
+        onClick={() => console.log('Saved!')}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        <Save 
+          size={18} 
+          strokeWidth={2}
+          className="group-hover:stroke-[#1d9bf0] text-gray-500" 
+        />
+      </button>
+      {showTooltip && createPortal(
+        <span 
+          className="tooltip-enter fixed bg-gray-600/90 text-white text-xs rounded-sm px-1 py-0.5 -translate-x-1/2 whitespace-nowrap"
+          style={{ 
+            top: `${tooltipPosition.top}px`,
+            left: `${tooltipPosition.left}px`
+          }}
+        >
+          Save to Tweet Maestro
+        </span>,
+        document.body
+      )}
+    </>
+  );
 }
+
+function injectButtonIntoTweet(tweetElement: Element) {
+  if (tweetElement.querySelector('.our-injected-button')) return;
+  
+  const actionBar = tweetElement.querySelector('[role="group"]');
+  if (!actionBar) return;
+
+  const buttonContainer = document.createElement('div');
+  buttonContainer.className = 'our-injected-button';
+  actionBar.appendChild(buttonContainer);
+  
+  const root = createRoot(buttonContainer);
+  root.render(<SaveButton />);
+}
+
+// Initialize observer to watch for new tweets
+const observer = new MutationObserver((mutations) => {
+  for (const mutation of mutations) {
+    mutation.addedNodes.forEach((node) => {
+      if (node instanceof HTMLElement) {
+        // Look for tweets in the added element and its children
+        const tweets = node.querySelectorAll('article[data-testid="tweet"]');
+        tweets.forEach(tweet => injectButtonIntoTweet(tweet));
+      }
+    });
+  }
+});
+
+// Start observing
+observer.observe(document.body, {
+  childList: true,
+  subtree: true
+});
+
+// Handle existing tweets
+document.querySelectorAll('article[data-testid="tweet"]')
+  .forEach(tweet => injectButtonIntoTweet(tweet));
+
+console.log('Tweet button injector loaded');

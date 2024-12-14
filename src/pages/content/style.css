@@ -4,3 +4,16 @@
 .your-class {
     color: aliceblue;
 }
+.tooltip-enter {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0s linear 0.8s;
+  z-index: 99999;
+  pointer-events: none;
+}
+
+body:has(.group:hover) .tooltip-enter {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0.8s;
+}
