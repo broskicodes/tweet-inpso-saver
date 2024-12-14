@@ -1,6 +1,7 @@
 {
   "env": {
-    "__DEV__": "true"
+    "__DEV__": "true",
+    "NODE_ENV": "development"
   },
   "watch": [
     "src",

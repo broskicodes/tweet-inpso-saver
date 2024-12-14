@@ -3,9 +3,9 @@ import { createPortal } from 'react-dom';
 import './style.css'
 import { Save } from 'lucide-react'
 import React from 'react'
+import { API_URL } from '../../constants';
 
-function SaveButton() {
-  const [showAbove, setShowAbove] = React.useState(false);
+function SaveButton({ tweetElement }: { tweetElement: Element }) {
   const [showTooltip, setShowTooltip] = React.useState(false);
   const buttonRef = React.useRef<HTMLButtonElement>(null);
   const [tooltipPosition, setTooltipPosition] = React.useState({ top: 0, left: 0 });
@@ -19,7 +19,6 @@ function SaveButton() {
       const spaceBelow = window.innerHeight - rect.bottom;
       const showAbove = spaceBelow < 40;
       
-      setShowAbove(showAbove);
       setTooltipPosition({
         top: showAbove ? rect.top - 24 : rect.bottom + 4,
         left: rect.left + rect.width / 2
@@ -31,20 +30,43 @@ function SaveButton() {
     return () => window.removeEventListener('scroll', updatePosition);
   }, []);
 
+  const handleSave = () => {
+    const tweetText = tweetElement.querySelector('[data-testid="tweetText"]')?.textContent;
+    const authorHandle = tweetElement.querySelector('[data-testid="User-Name"] a')?.getAttribute('href')?.replace('/', '');
+    
+    // Get tweet ID from analytics link
+    const analyticsLink = tweetElement.querySelector('a[href*="/analytics"]')?.getAttribute('href');
+    const tweetId = analyticsLink?.split('/status/')[1]?.split('/')[0];
+
+    console.log(process.env.NODE_ENV, {
+      id: tweetId,
+      text: tweetText,
+      author: authorHandle,
+    });
+
+    // Example usage
+    fetch(`${API_URL}/twitter/tweet/save`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        tweetId,
+        userId: "nonono",
+      })
+    });
+  };
+
   return (
     <>
       <button 
         ref={buttonRef}
         className="p-2.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-900 group relative"
-        onClick={() => console.log('Saved!')}
+        onClick={handleSave}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
-        <Save 
-          size={18} 
-          strokeWidth={2}
-          className="group-hover:stroke-[#1d9bf0] text-gray-500" 
-        />
+        <Save size={18} strokeWidth={2} className="group-hover:stroke-[#1d9bf0] text-gray-500" />
       </button>
       {showTooltip && createPortal(
         <span 
@@ -73,7 +95,7 @@ function injectButtonIntoTweet(tweetElement: Element) {
   actionBar.appendChild(buttonContainer);
   
   const root = createRoot(buttonContainer);
-  root.render(<SaveButton />);
+  root.render(<SaveButton tweetElement={tweetElement} />);
 }
 
 // Initialize observer to watch for new tweets
