@@ -6,6 +6,16 @@
   "icons": {
     "128": "public/dev-icon-128.png"
   },
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "http://localhost:8000/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:3000/*",
+      "http://localhost:8000/*"
+    ]
+  },
   "web_accessible_resources": [
     {
       "resources": [

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import './style.css'
 import { Save } from 'lucide-react'
 import React from 'react'
-import { API_URL } from '../../constants';
+import { API_URL } from '../../lib/constants';
 
 function SaveButton({ tweetElement }: { tweetElement: Element }) {
   const [showTooltip, setShowTooltip] = React.useState(false);
@@ -30,29 +30,36 @@ function SaveButton({ tweetElement }: { tweetElement: Element }) {
     return () => window.removeEventListener('scroll', updatePosition);
   }, []);
 
-  const handleSave = () => {
-    const tweetText = tweetElement.querySelector('[data-testid="tweetText"]')?.textContent;
-    const authorHandle = tweetElement.querySelector('[data-testid="User-Name"] a')?.getAttribute('href')?.replace('/', '');
+  const handleSave = async () => {
+    const {is_authenticated} = await chrome.storage.local.get('is_authenticated');
+
+    if (!is_authenticated) {
+      console.log('Not authenticated');
+      return;
+    }
+
+    // const tweetText = tweetElement.querySelector('[data-testid="tweetText"]')?.textContent;
+    // const authorHandle = tweetElement.querySelector('[data-testid="User-Name"] a')?.getAttribute('href')?.replace('/', '');
     
     // Get tweet ID from analytics link
     const analyticsLink = tweetElement.querySelector('a[href*="/analytics"]')?.getAttribute('href');
     const tweetId = analyticsLink?.split('/status/')[1]?.split('/')[0];
-
+    const {user_id} = await chrome.storage.local.get('user_id');
+    
     console.log(process.env.NODE_ENV, {
       id: tweetId,
-      text: tweetText,
-      author: authorHandle,
+      userId: user_id,
     });
 
     // Example usage
-    fetch(`${API_URL}/twitter/tweet/save`, {
+    fetch(`${import.meta.env.VITE_API_URL}/twitter/tweet/save`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         tweetId,
-        userId: "nonono",
+        userId: user_id,
       })
     });
   };

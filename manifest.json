@@ -11,7 +11,13 @@
     "128": "icon-128.png"
   },
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "storage",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "https://tweetmaestro.com/*",
+    "https://api.builderepidemic.com/*"
   ],
   "content_scripts": [
     {
@@ -35,7 +41,7 @@
         "icon-128.png",
         "icon-32.png"
       ],
-      "matches": []
+      "matches": ["<all_urls>"]
     }
   ]
 }
