@@ -17,8 +17,14 @@
   ],
   "host_permissions": [
     "https://tweetmaestro.com/*",
-    "https://api.builderepidemic.com/*"
+    "https://api.tweetmaestro.com/*"
   ],
+  "externally_connectable": {
+    "matches": [
+      "https://tweetmaestro.com/*",
+      "https://api.tweetmaestro.com/*"
+    ]
+  },
   "content_scripts": [
     {
       "matches": [
