@@ -14,6 +14,11 @@ chrome.runtime.onMessageExternal.addListener(
           new URLSearchParams(message.payload)
         );
         console.log('OAuth callback result:', result);
+        
+        // Close the current tab
+        if (sender.tab?.id) {
+          chrome.tabs.remove(sender.tab.id);
+        }
       } catch (error) {
         console.error('OAuth callback error:', error);
       }
