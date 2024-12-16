@@ -1,4 +1,5 @@
 {
+  "name": "Muse by TweetMaestro (DEV)",
   "action": {
     "default_icon": "public/dev-icon-32.png",
     "default_popup": "src/pages/popup/index.html"

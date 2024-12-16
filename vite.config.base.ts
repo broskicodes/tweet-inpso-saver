@@ -26,7 +26,8 @@ export const baseManifest = {
 
 export const baseBuildOptions: BuildOptions = {
   sourcemap: isDev,
-  emptyOutDir: !isDev
+  emptyOutDir: !isDev,
+  outDir: isDev ? resolve(__dirname, 'dist_dev') : resolve(__dirname, 'dist_prod')
 }
 
 export default defineConfig({

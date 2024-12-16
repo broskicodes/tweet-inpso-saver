@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Tweet Inspo",
+  "name": "Muse by TweetMaestro",
   "action": {
     "default_popup": "src/pages/popup/index.html",
     "default_icon": {

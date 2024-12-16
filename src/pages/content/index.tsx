@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import './style.css'
 import { Save } from 'lucide-react'
 import React from 'react'
-import { API_URL } from '../../lib/constants';
+
+const isDev = import.meta.env.MODE === 'development';
 
 function SaveButton({ tweetElement }: { tweetElement: Element }) {
   const [showTooltip, setShowTooltip] = React.useState(false);
@@ -129,3 +130,25 @@ document.querySelectorAll('article[data-testid="tweet"]')
   .forEach(tweet => injectButtonIntoTweet(tweet));
 
 console.log('Tweet button injector loaded');
+
+// Function to hide engagement metrics
+function hideEngagementMetrics() {
+  if (!isDev) return;
+  
+  const observer = new MutationObserver((mutations) => {
+    // Select spans inside analytics links
+    const viewStats = document.querySelectorAll('a[href*="/analytics"]');
+    viewStats.forEach(stat => {
+      const element = stat as HTMLElement;
+      element.style.display = 'none';
+    });
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
+
+// Call it when content script loads
+hideEngagementMetrics();

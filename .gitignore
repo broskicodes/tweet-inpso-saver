@@ -381,9 +381,7 @@ $RECYCLE.BIN/
 /coverage
 
 # build
-/dist
-/dist_chrome
-/dist_firefox
+/dist_*
 
 # etc
 .idea
