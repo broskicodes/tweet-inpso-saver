@@ -8,6 +8,7 @@ const isDev = import.meta.env.MODE === 'development';
 
 function SaveButton({ tweetElement }: { tweetElement: Element }) {
   const [showTooltip, setShowTooltip] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
   const buttonRef = React.useRef<HTMLButtonElement>(null);
   const [tooltipPosition, setTooltipPosition] = React.useState({ top: 0, left: 0 });
 
@@ -31,7 +32,33 @@ function SaveButton({ tweetElement }: { tweetElement: Element }) {
     return () => window.removeEventListener('scroll', updatePosition);
   }, []);
 
-  const handleSave = async () => {
+  React.useEffect(() => {
+    const checkSaveStatus = async () => {
+      const { user_id, is_authenticated } = await chrome.storage.local.get(['user_id', 'is_authenticated']);
+      if (!is_authenticated) return;
+
+      // Get tweet ID using existing logic
+      const analyticsLink = tweetElement.querySelector('a[href*="/analytics"]')?.getAttribute('href');
+      let tweetId = analyticsLink?.split('/status/')[1]?.split('/')[0];
+
+      if (!tweetId) {
+        const urlMatch = window.location.pathname.match(/\/status\/(\d+)/);
+        if (urlMatch) {
+          tweetId = urlMatch[1];
+        }
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/twitter/tweet/${user_id}/${tweetId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSaved(data.found);
+      }
+    };
+
+    checkSaveStatus();
+  }, []); // Run once on mount
+
+  const handleSave = React.useCallback(async () => {
     const {is_authenticated} = await chrome.storage.local.get('is_authenticated');
 
     if (!is_authenticated) {
@@ -42,9 +69,18 @@ function SaveButton({ tweetElement }: { tweetElement: Element }) {
     // const tweetText = tweetElement.querySelector('[data-testid="tweetText"]')?.textContent;
     // const authorHandle = tweetElement.querySelector('[data-testid="User-Name"] a')?.getAttribute('href')?.replace('/', '');
     
-    // Get tweet ID from analytics link
+    // Get tweet ID from analytics link or URL if we're on a tweet page
     const analyticsLink = tweetElement.querySelector('a[href*="/analytics"]')?.getAttribute('href');
-    const tweetId = analyticsLink?.split('/status/')[1]?.split('/')[0];
+    let tweetId = analyticsLink?.split('/status/')[1]?.split('/')[0];
+
+    // Fallback: Get ID from URL if we're on a tweet page and analytics link method failed
+    if (!tweetId) {
+      const urlMatch = window.location.pathname.match(/\/status\/(\d+)/);
+      if (urlMatch) {
+        tweetId = urlMatch[1];
+      }
+    }
+
     const {user_id} = await chrome.storage.local.get('user_id');
     
     console.log(process.env.NODE_ENV, {
@@ -52,8 +88,7 @@ function SaveButton({ tweetElement }: { tweetElement: Element }) {
       userId: user_id,
     });
 
-    // Example usage
-    fetch(`${import.meta.env.VITE_API_URL}/twitter/tweet/save`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/twitter/tweet/save`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -63,7 +98,20 @@ function SaveButton({ tweetElement }: { tweetElement: Element }) {
         userId: user_id,
       })
     });
-  };
+
+    if (!response.ok) {
+      console.error('Failed to save tweet', response);
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      if (saved) {
+        setSaved(false);
+      } else {
+        setSaved(true);
+      }
+    }
+  }, [tweetElement, saved]);
 
   return (
     <>
@@ -74,7 +122,15 @@ function SaveButton({ tweetElement }: { tweetElement: Element }) {
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
-        <Save size={18} strokeWidth={2} className="group-hover:stroke-[#1d9bf0] text-gray-500" />
+        <Save 
+          size={18} 
+          strokeWidth={2} 
+          className={`transition-colors duration-200 ${
+            saved 
+              ? 'text-blue-500'
+              : 'group-hover:stroke-[#1d9bf0] text-gray-500'
+          }`} 
+        />
       </button>
       {showTooltip && createPortal(
         <span 
@@ -84,7 +140,7 @@ function SaveButton({ tweetElement }: { tweetElement: Element }) {
             left: `${tooltipPosition.left}px`
           }}
         >
-          Save to Tweet Maestro
+          {saved ? 'Unave' : 'Save to Tweet Maestro'}
         </span>,
         document.body
       )}
@@ -151,4 +207,4 @@ function hideEngagementMetrics() {
 }
 
 // Call it when content script loads
-hideEngagementMetrics();
+// hideEngagementMetrics();
