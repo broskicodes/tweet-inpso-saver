@@ -67,7 +67,7 @@ function SaveButton({ tweetElement }: { tweetElement: Element }) {
     }
 
     // const tweetText = tweetElement.querySelector('[data-testid="tweetText"]')?.textContent;
-    // const authorHandle = tweetElement.querySelector('[data-testid="User-Name"] a')?.getAttribute('href')?.replace('/', '');
+    const authorHandle = tweetElement.querySelector('[data-testid="User-Name"] a')?.getAttribute('href')?.replace('/', '');
     
     // Get tweet ID from analytics link or URL if we're on a tweet page
     const analyticsLink = tweetElement.querySelector('a[href*="/analytics"]')?.getAttribute('href');
@@ -83,10 +83,11 @@ function SaveButton({ tweetElement }: { tweetElement: Element }) {
 
     const {user_id} = await chrome.storage.local.get('user_id');
     
-    console.log(process.env.NODE_ENV, {
-      id: tweetId,
-      userId: user_id,
-    });
+    // console.log(process.env.NODE_ENV, {
+    //   id: tweetId,
+    //   author: authorHandle,
+    //   userId: user_id,
+    // });
 
     const response = await fetch(`${import.meta.env.VITE_API_URL}/twitter/tweet/save`, {
       method: 'POST',
@@ -96,6 +97,7 @@ function SaveButton({ tweetElement }: { tweetElement: Element }) {
       body: JSON.stringify({
         tweetId,
         userId: user_id,
+        author: authorHandle,
       })
     });
 
